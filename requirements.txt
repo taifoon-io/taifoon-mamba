@@ -1,0 +1,14 @@
+# taifoon-mamba dispatcher — Python dependencies
+# Production (Pro tier) uses additional proprietary crates via Rust FFI.
+# This scaffold is dependency-free by design — only stdlib.
+
+# Optional for production on-chain submission:
+# web3==7.x
+# eth-account==0.x
+
+# Optional for rich schema validation:
+# jsonschema==4.x
+
+# Dev / CI:
+# ruff
+# pyright

@@ -1,0 +1,25 @@
+[project]
+name = "taifoon-mamba"
+version = "0.1.0"
+description = "Pro dispatcher tier on top of open-mamba — Taifoon Builders Programme intake and CostOptimizer routing"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "TSUL-1.0" }
+
+[project.scripts]
+taifoon-mamba = "taifoon_mamba.dispatcher:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+include = ["taifoon_mamba"]
+reportMissingImports = false
+reportMissingModuleSource = false
