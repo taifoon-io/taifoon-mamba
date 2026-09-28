@@ -1,27 +1,20 @@
 """
 Cost optimizer — routes each brief to an (agent_slug, model) pair based on category.
 
-Routing table:
-    evm/*           → coder / claude-sonnet-4-6
-    sol/*           → coder / claude-sonnet-4-6
-    btc/*           → coder / claude-sonnet-4-6
-    cosmos/*        → coder / claude-sonnet-4-6
-    lambda-replay/* → coder / claude-sonnet-4-6
-    oracle/*        → coder / claude-opus-4-7   (high-complexity inference)
-    aggregator/*    → coder / claude-opus-4-7
-    platform-phase5 → coder / claude-opus-4-7
-    platform-phase6 → coder / claude-opus-4-7
-    <unknown>       → coder / claude-sonnet-4-6  (safe fallback)
+Routing table (the first segment of the category; a "-replay" suffix matches its chain, so "sol-replay" → sol):
+    evm, sol, btc, cosmos, lambda-replay           → coder / claude-sonnet-5
+    oracle, aggregator, platform-phase5/phase6     → coder / claude-opus-5-5   (high-complexity work)
+    <unknown>                                      → coder / claude-sonnet-5   (safe fallback)
 
-Weight tuning (v0.2) will adjust these from DuckDB historical data.
+weight_tuning() keeps a running score per category from past outcomes; it does not change routes yet.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
-SONNET = "claude-sonnet-4-6"
-OPUS   = "claude-opus-4-7"
+SONNET = "claude-sonnet-5"
+OPUS   = "claude-opus-5-5"
 
 _ROUTING_TABLE: dict[str, tuple[str, str]] = {
     "evm":              ("coder", SONNET),
@@ -52,13 +45,15 @@ class CostOptimizer:
         """
         raw_category: str = brief.get("category", "")
         root = raw_category.split("/")[0].lower()
-        return _ROUTING_TABLE.get(root, _FALLBACK)
+        if root in _ROUTING_TABLE:
+            return _ROUTING_TABLE[root]
+        return _ROUTING_TABLE.get(root.removesuffix("-replay"), _FALLBACK)
 
     def weight_tuning(self, history: list[dict[str, Any]]) -> dict[str, Any]:
         """Accept historical task outcomes and return updated routing weights.
 
-        In v0.1 this is a stub. v0.2 will run a gradient step over
-        cost_usd × verdict_score from mamba DuckDB analytics.
+        A running average of the verdict score per category (approved 1.0, changes requested 0.5,
+        blocked 0.0). Routes do not read these weights yet.
 
         Args:
             history: list of dicts with at least ``category``, ``cost_usd``,

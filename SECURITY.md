@@ -10,7 +10,7 @@
 
 Do **not** open a public GitHub issue for security vulnerabilities.
 
-Email **taifooon@proton.me** with:
+Report privately through GitHub (**Security** tab → **Report a vulnerability**) or email **taifooon@proton.me** with:
 - A description of the vulnerability and its potential impact
 - Steps to reproduce or a minimal proof-of-concept
 - Your preferred contact for follow-up
@@ -19,7 +19,7 @@ We will acknowledge receipt within 48 hours and aim to ship a fix within 14 days
 
 ## Scope
 
-This policy covers `taifoon-mamba` — the TSUL-licensed Pro dispatcher tier. For vulnerabilities in the open-core task bus (`open-mamba`) or on-chain contracts, use the same contact.
+This policy covers `taifoon-mamba`. For vulnerabilities in Taifoon's hosted services or on-chain contracts, use the same contact.
 
 ## Notes
 

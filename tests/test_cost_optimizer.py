@@ -73,3 +73,9 @@ def test_weight_tuning_blocked_lowers_weight(opt):
     history = [{"category": "aggregator", "cost_usd": 0.05, "verdict": "blocked"}]
     result = opt.weight_tuning(history)
     assert result.get("aggregator", 1.0) < 1.0
+
+
+@pytest.mark.parametrize("category,chain_route", [("sol-replay", "sol"), ("btc-replay", "btc"), ("evm-replay", "evm"), ("cosmos-replay/ibc", "cosmos")])
+def test_replay_categories_match_their_chain(opt, category, chain_route):
+    from taifoon_mamba.cost_optimizer import _ROUTING_TABLE
+    assert opt.route({"category": category}) == _ROUTING_TABLE[chain_route]

@@ -1,20 +1,30 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.1] — 2026-09-28
 
-- `v0.2` — Mamba-class model for triage (fine-tuned on real dispatcher decisions)
-- Cost-optimizer weight tuning from DuckDB historical data
-- BuildersRegistry on-chain verdict submission (TAIFOON_REGISTRY_ADDR)
-- Branded Slack + email delivery channels
+### Fixed
+
+- Classification matches whole words: "solution" or "console" no longer count as Solana.
+- `-replay` categories reach their chain's route in the cost optimizer. Before, they all fell through to the fallback.
+- `jobs_per_hour` uses a one-minute minimum window, so a start-up burst is not reported as millions per hour.
+- Synthetic mode runs on its own. Before, it needed code outside this repository.
+
+### Changed
+
+- The data directory is `$TAIFOON_MAMBA_DATA`, default `./.data`.
+- `--once` routes the queue once and exits. `synthetic --ticks N` stops after N ticks. `--interval` must be positive.
+- Models: `claude-sonnet-5` and `claude-opus-5-5`.
+- `pyproject.toml` declares its build backend and a `dev` extra. CI runs Python 3.12 and 3.13.
+- README and docs describe what this package does today, and install from GitHub (it is not on PyPI).
 
 ## [0.1.0] — 2026-05-10
 
-Initial scaffold. Pro tier dispatcher on top of open-mamba.
+Initial scaffold: dispatcher and cost-optimizer routing.
 
 ### Added
 
 - `taifoon_mamba.dispatcher` — queue watcher, heartbeat writer, brief classifier
-- `taifoon_mamba.synthetic` — demo loop delegate (→ brain_bridge.py)
+- `taifoon_mamba.synthetic` — demo heartbeat loop
 - Dispatcher flow: queue.jsonl → classify → BountyDraft v1 → /builders/bounties
 - Heartbeat at `.data/dispatch/heartbeat.json` every poll tick (LiveBrain integration)
 - Category taxonomy: evm/sol/btc/cosmos/lambda-replay, oracle, aggregator, platform-phase5/6
