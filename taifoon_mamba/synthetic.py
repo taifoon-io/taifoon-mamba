@@ -1,39 +1,43 @@
 """
-Synthetic dispatcher mode — emits a believable demo cadence for /os/dispatch.
+Synthetic mode: writes a steady demo heartbeat, so a dashboard that reads heartbeat.json can be built and tested
+without real jobs. It routes nothing.
 
 Usage:
-    python -m taifoon_mamba.synthetic --interval 2
+    python -m taifoon_mamba.synthetic --interval 2        (Ctrl-C to stop)
+    python -m taifoon_mamba.synthetic --ticks 10          write 10 ticks and exit
 """
 from __future__ import annotations
 
 import argparse
-import sys
-from pathlib import Path
+import random
+import time
 
-THIS_DIR = Path(__file__).resolve().parent.parent
-BRAIN_BRIDGE = THIS_DIR.parent / "open-mamba" / "brain_bridge.py"
+from taifoon_mamba import dispatcher
+
+
+def run(interval_s: float = 2.0, ticks: int | None = None, seed: int | None = None) -> int:
+    """Write synthetic heartbeats; returns how many were written."""
+    rng = random.Random(seed)
+    tick = 0
+    while ticks is None or tick < ticks:
+        tick += 1
+        dispatcher._write_heartbeat(tick, round(rng.uniform(4, 20), 1))
+        if ticks is None or tick < ticks:
+            time.sleep(interval_s)
+    return tick
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--interval", type=float, default=2.0, help="tick interval in seconds")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--interval", type=float, default=2.0, help="seconds between ticks (default 2)")
+    ap.add_argument("--ticks", type=int, default=None, help="stop after this many ticks (default: run until Ctrl-C)")
     args = ap.parse_args()
-
-    # Delegate to brain_bridge.py synthetic loop — it writes to
-    # ../taifoon-next/.data so /os/dispatch pulses.
-    if BRAIN_BRIDGE.exists():
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("brain_bridge", BRAIN_BRIDGE)
-        mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-        mod.synthetic_loop(interval_s=args.interval)
-    else:
-        print(
-            f"brain_bridge.py not found at {BRAIN_BRIDGE}\n"
-            "Set TAIFOON_NEXT_DATA_ROOT or run from spinner/open-mamba/ directly.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    if args.interval <= 0:
+        ap.error("--interval must be positive")
+    try:
+        run(args.interval, args.ticks)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":

@@ -1,44 +1,23 @@
-# taifoon-mamba — Cost Optimizer
+# Cost optimizer
 
-The cost optimizer sits between job intake and the open-mamba bus. It inspects each task and routes it to the lowest-cost model/agent that meets the quality bar.
+`CostOptimizer.route(brief)` returns `(agent, model)` for a brief's `category`.
 
 ## Routing table
 
-| Task type | Default route | Rationale |
-|---|---|---|
-| Protocol intel query | `nemotron/taifoon` | Fine-tuned on protocol data; no Claude cost |
-| Code delivery | `coder` → claude-sonnet-4-6 | Full reasoning required |
-| Code review | `code-reviewer` → claude-opus-4-7 | Highest accuracy for security review |
-| Bounty triage (v0.1) | deterministic rules dispatcher | No LLM cost for classification |
-| Bounty triage (v0.2) | `nemotron/taifoon` fine-tuned | Post fine-tune on real dispatcher decisions |
+The first segment of the category is looked up (`"aggregator/uniswap"` → `aggregator`). If it is not in the table and
+ends in `-replay`, its chain is looked up instead (`"sol-replay"` → `sol`). Anything else gets the fallback.
 
-## Weight tuning
+| Category | Agent | Model | Why |
+|---|---|---|---|
+| evm, sol, btc, cosmos, lambda-replay | coder | claude-sonnet-5 | Routine adapter and replay work |
+| oracle, aggregator, platform-phase5, platform-phase6 | coder | claude-opus-5-5 | Harder reasoning, higher cost of a mistake |
+| anything else | coder | claude-sonnet-5 | Safe fallback |
 
-The optimizer pulls historical cost + verdict data from the open-mamba DuckDB lake (via `mamba-lake` crate API) and recomputes routing weights every 6 hours:
+To add a category: add it to `_ROUTING_TABLE` in `cost_optimizer.py`, add a test in `tests/test_cost_optimizer.py`,
+and add a row here.
 
-```
-weight(agent, task_type) = quality_score(agent, task_type) / median_cost(agent, task_type)
-```
+## Weights
 
-Where `quality_score` is derived from:
-- `code-reviewer` verdict rate: `APPROVED` / total tasks routed
-- Token efficiency: tasks completed within budget / total tasks
-
-## Fallback
-
-If the preferred route fails (agent not found, 5xx from nemotron), the optimizer falls back to the next-cheapest route and logs the fallback decision in DuckDB for weight adjustment.
-
-## Configuration
-
-Set in `~/.mamba/runtime.env`:
-
-```bash
-# Disable optimizer, always use specified model:
-MAMBA_OPTIMIZER_DISABLED=1
-
-# Override quality threshold (default 0.85):
-MAMBA_QUALITY_THRESHOLD=0.90
-
-# Cap per-task cost in USD (tasks exceeding cap are rejected):
-MAMBA_COST_CAP_USD=0.50
-```
+`weight_tuning(history)` takes past outcomes, `[{ "category", "cost_usd", "verdict" }]`, where verdict is `approved`
+(1.0), `changes_requested` (0.5) or anything else (0.0). It keeps a running average per category and returns the
+weights. Routes do not read the weights yet.

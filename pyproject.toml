@@ -1,16 +1,31 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "taifoon-mamba"
-version = "0.1.0"
-description = "Pro dispatcher tier on top of open-mamba — Taifoon Builders Programme intake and CostOptimizer routing"
+version = "0.1.1"
+description = "Job-brief dispatcher and cost-optimizer routing: classify each brief, pick the agent and model"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "TSUL-1.0" }
+authors = [{ name = "Taifoon", email = "taifooon@proton.me" }]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6", "pyright>=1.1.380", "pytest>=8"]
+
+[project.urls]
+Homepage = "https://github.com/taifoon-io/taifoon-mamba"
+License = "https://github.com/taifoon-io/license/blob/main/LICENSE.md"
 
 [project.scripts]
 taifoon-mamba = "taifoon_mamba.dispatcher:main"
 
+[tool.setuptools]
+packages = ["taifoon_mamba"]
+
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
@@ -23,3 +38,6 @@ typeCheckingMode = "basic"
 include = ["taifoon_mamba"]
 reportMissingImports = false
 reportMissingModuleSource = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
